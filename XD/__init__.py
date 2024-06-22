@@ -18,7 +18,7 @@ class TelegramMessage:
 
     class Chat:
         def __init__(self, chat_data):
-            self.id = chat_data.get('id')
+            self.id = chat_data['id']
             self.type = chat_data.get('type')
             self.title = chat_data.get('title')
             self.username = chat_data.get('username')
@@ -26,7 +26,7 @@ class TelegramMessage:
 
     class FromUser:
         def __init__(self, from_data):
-            self.id = from_data.get('id')
+            self.id = from_data.['id']
             self.first_name = from_data.get('first_name')
             self.last_name = from_data.get('last_name')
             self.username = from_data.get('username')
