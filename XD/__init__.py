@@ -7,10 +7,10 @@ from .exceptions import UnAuthorizedBotToken, UnKnownError, ChatNotFound, Conver
 class TelegramMessage:
     def __init__(self, message_data, bot):
         self.data = message_data
-        self.id = message_data['id']
-        self.date = message_data['date']
-        self.chat = self.Chat(message_data['chat'])
-        self.from_user = self.FromUser(message_data['from_user'])
+        self.message_id = message_data.get('id', message_data.get('message_id'))
+        self.date = message_data.get('date')
+        self.chat = self.Chat(message_data.get('chat'))
+        self.from_user = self.FromUser(message_data.get('from_user', {}))
         self.text = message_data.get('text')
         self.entities = message_data.get('entities', [])
         self.command = message_data.get('command', [])
@@ -18,15 +18,15 @@ class TelegramMessage:
 
     class Chat:
         def __init__(self, chat_data):
-            self.id = chat_data['id']
-            self.type = chat_data['type']
+            self.id = chat_data.get('id')
+            self.type = chat_data.get('type')
             self.title = chat_data.get('title')
             self.username = chat_data.get('username')
             self.photo = chat_data.get('photo')
 
     class FromUser:
         def __init__(self, from_data):
-            self.id = from_data['id']
+            self.id = from_data.get('id')
             self.first_name = from_data.get('first_name')
             self.last_name = from_data.get('last_name')
             self.username = from_data.get('username')
@@ -35,26 +35,26 @@ class TelegramMessage:
             self.language_code = from_data.get('language_code')
 
     async def reply_text(self, text, parse_mode='MARKDOWN'):
-        return await self.bot.send_message(self.chat.id, text, parse_mode, self.id)
+        return await self.bot.send_message(self.chat.id, text, parse_mode, self.message_id)
 
     async def reply_photo(self, photo, caption=None):
-        return await self.bot.send_photo(self.chat.id, photo, caption, self.id)
+        return await self.bot.send_photo(self.chat.id, photo, caption, self.message_id)
     
     async def reply_audio(self, audio):
-        return await self.bot.send_audio(self.chat.id, audio, self.id)
+        return await self.bot.send_audio(self.chat.id, audio, self.message_id)
 
     async def reply_document(self, document):
-        return await self.bot.send_document(self.chat.id, document, self.id)
+        return await self.bot.send_document(self.chat.id, document, self.message_id)
 
     async def reply_video(self, video):
-        return await self.bot.send_video(self.chat.id, video, self.id)
+        return await self.bot.send_video(self.chat.id, video, self.message_id)
 
     async def reply_voice(self, voice):
-        return await self.bot.send_voice(self.chat.id, voice, self.id) 
+        return await self.bot.send_voice(self.chat.id, voice, self.message_id) 
 
     def pretty_print(self):
         return {
-            'message_id': self.id,
+            'message_id': self.message_id,
             'date': self.date,
             'chat': {
                 'id': self.chat.id,
@@ -208,4 +208,4 @@ class Client:
         except Exception as e:
             self.logger.error(f"Exception occurred while getting updates: {e}")
             return None
-                                         
+        
