@@ -173,7 +173,7 @@ class Client:
             return wrapper
         return decorator
 
-        async def _handle_update(self, update):
+    async def _handle_update(self, update):
         if 'message' in update:
             message = TelegramMessage(update['message'], self)
             if message.data.get('text'):
@@ -181,8 +181,7 @@ class Client:
                 command = text.split()[0]
                 if command in self._message_handlers:
                     await self._message_handlers[command](message)
-
-    
+                    
     async def start(self):
         if not self.validate_token():
             self.logger.error("Bot token is invalid. Exiting...")
