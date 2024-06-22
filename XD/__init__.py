@@ -26,7 +26,7 @@ class TelegramMessage:
 
     class FromUser:
         def __init__(self, from_data):
-            self.id = from_data.['id']
+            self.id = from_data['id']
             self.first_name = from_data.get('first_name')
             self.last_name = from_data.get('last_name')
             self.username = from_data.get('username')
