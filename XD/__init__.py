@@ -148,7 +148,25 @@ class TelegramMessage:
             'outgoing': self.data.get('outgoing', False),
         }
 
+    async def edit_text(self, new_text):
+        """
+        Edit the message text asynchronously.
+        """
+        await self.bot.edit_message_text(
+            chat_id=self.chat.id,
+            message_id=self.message_id,
+            text=new_text
+        )
 
+    async def delete(self):
+        """
+        Delete the message asynchronously.
+        """
+        await self.bot.delete_message(
+            chat_id=self.chat.id,
+            message_id=self.message_id
+        )
+        
     async def reply_text(self, text, parse_mode='MARKDOWN'):
         """
         Send a text message as a reply to the current message.
