@@ -1,1 +1,1 @@
-# XD-lib
+# XD-lib is a python library that provides access to deep customization
