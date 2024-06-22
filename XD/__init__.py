@@ -11,13 +11,13 @@ class TelegramMessage:
         self.message_id = message_data.get('message_id')
         self.date = message_data.get('date')
         self.chat = self.Chat(message_data.get('chat', {}))
-        self.from_user = self.FromUser(message_data.get('from', {})) #key corrected from user to from
+        self.from_user = self.FromUser(message_data.get('from', {}))  # Key corrected from user to from
         self.text = message_data.get('text')
         self.entities = message_data.get('entities', [])
         self.command = message_data.get('command', [])
         self.bot = bot
         self.message = self.pretty_print()
-        
+
     class Chat:
         def __init__(self, chat_data):
             self.id = chat_data.get('id')
@@ -76,6 +76,72 @@ class TelegramMessage:
                 self.small_photo_unique_id = photo_data.get('small_photo_unique_id')
                 self.big_file_id = photo_data.get('big_file_id')
                 self.big_photo_unique_id = photo_data.get('big_photo_unique_id')
+
+    def pretty_print(self):
+        return {
+            'message_id': self.message_id,
+            'date': self.date,
+            'chat': {
+                'id': self.chat.id,
+                'type': self.chat.type,
+                'title': self.chat.title,
+                'username': self.chat.username,
+                'is_verified': self.chat.is_verified,
+                'is_restricted': self.chat.is_restricted,
+                'is_creator': self.chat.is_creator,
+                'is_scam': self.chat.is_scam,
+                'is_fake': self.chat.is_fake,
+                'has_protected_content': self.chat.has_protected_content,
+                'permissions': {
+                    'can_send_messages': self.chat.permissions.can_send_messages,
+                    'can_send_media_messages': self.chat.permissions.can_send_media_messages,
+                    'can_send_other_messages': self.chat.permissions.can_send_other_messages,
+                    'can_send_polls': self.chat.permissions.can_send_polls,
+                    'can_add_web_page_previews': self.chat.permissions.can_add_web_page_previews,
+                    'can_change_info': self.chat.permissions.can_change_info,
+                    'can_invite_users': self.chat.permissions.can_invite_users,
+                    'can_pin_messages': self.chat.permissions.can_pin_messages,
+                },
+            },
+            'from_user': {
+                'id': self.from_user.id,
+                'first_name': self.from_user.first_name,
+                'last_name': self.from_user.last_name,
+                'username': self.from_user.username,
+                'is_bot': self.from_user.is_bot,
+                'is_premium': self.from_user.is_premium,
+                'language_code': self.from_user.language_code,
+                'is_self': self.from_user.is_self,
+                'is_contact': self.from_user.is_contact,
+                'is_mutual_contact': self.from_user.is_mutual_contact,
+                'is_deleted': self.from_user.is_deleted,
+                'is_verified': self.from_user.is_verified,
+                'is_restricted': self.from_user.is_restricted,
+                'is_scam': self.from_user.is_scam,
+                'is_fake': self.from_user.is_fake,
+                'is_support': self.from_user.is_support,
+                'status': self.from_user.status,
+                'emoji_status': {
+                    'custom_emoji_id': self.from_user.emoji_status.custom_emoji_id,
+                },
+                'dc_id': self.from_user.dc_id,
+                'photo': {
+                    'small_file_id': self.from_user.photo.small_file_id,
+                    'small_photo_unique_id': self.from_user.photo.small_photo_unique_id,
+                    'big_file_id': self.from_user.photo.big_file_id,
+                    'big_photo_unique_id': self.from_user.photo.big_photo_unique_id,
+                },
+            },
+            'text': self.text,
+            'entities': self.entities,
+            'command': self.command,
+            'mentioned': self.data.get('mentioned', False),
+            'scheduled': self.data.get('scheduled', False),
+            'from_scheduled': self.data.get('from_scheduled', False),
+            'has_protected_content': self.data.get('has_protected_content', False),
+            'outgoing': self.data.get('outgoing', False),
+        }
+
 
     async def reply_text(self, text, parse_mode='MARKDOWN'):
         """
@@ -184,72 +250,6 @@ class TelegramMessage:
         The `chat.id` and `message_id` of the current message are used as parameters for the `send_voice` method.
         """
         return await self.bot.send_voice(self.chat.id, voice, self.message_id) 
-
-    def pretty_print(self):
-        return {
-            'message_id': self.message_id,
-            'date': self.date,
-            'chat': {
-                'id': self.chat.id,
-                'type': self.chat.type,
-                'title': self.chat.title,
-                'username': self.chat.username,
-                'is_verified': self.chat.is_verified,
-                'is_restricted': self.chat.is_restricted,
-                'is_creator': self.chat.is_creator,
-                'is_scam': self.chat.is_scam,
-                'is_fake': self.chat.is_fake,
-                'has_protected_content': self.chat.has_protected_content,
-                'permissions': {
-                    'can_send_messages': self.chat.permissions.can_send_messages,
-                    'can_send_media_messages': self.chat.permissions.can_send_media_messages,
-                    'can_send_other_messages': self.chat.permissions.can_send_other_messages,
-                    'can_send_polls': self.chat.permissions.can_send_polls,
-                    'can_add_web_page_previews': self.chat.permissions.can_add_web_page_previews,
-                    'can_change_info': self.chat.permissions.can_change_info,
-                    'can_invite_users': self.chat.permissions.can_invite_users,
-                    'can_pin_messages': self.chat.permissions.can_pin_messages,
-                },
-            },
-            'from_user': {
-                'id': self.from_user.id,
-                'first_name': self.from_user.first_name,
-                'last_name': self.from_user.last_name,
-                'username': self.from_user.username,
-                'is_bot': self.from_user.is_bot,
-                'is_premium': self.from_user.is_premium,
-                'language_code': self.from_user.language_code,
-                'is_self': self.from_user.is_self,
-                'is_contact': self.from_user.is_contact,
-                'is_mutual_contact': self.from_user.is_mutual_contact,
-                'is_deleted': self.from_user.is_deleted,
-                'is_verified': self.from_user.is_verified,
-                'is_restricted': self.from_user.is_restricted,
-                'is_scam': self.from_user.is_scam,
-                'is_fake': self.from_user.is_fake,
-                'is_support': self.from_user.is_support,
-                'status': self.from_user.status,
-                'emoji_status': {
-                    'custom_emoji_id': self.from_user.emoji_status.custom_emoji_id,
-                },
-                'dc_id': self.from_user.dc_id,
-                'photo': {
-                    'small_file_id': self.from_user.photo.small_file_id,
-                    'small_photo_unique_id': self.from_user.photo.small_photo_unique_id,
-                    'big_file_id': self.from_user.photo.big_file_id,
-                    'big_photo_unique_id': self.from_user.photo.big_photo_unique_id,
-                },
-            },
-            'text': self.text,
-            'entities': self.entities,
-            'command': self.command,
-            'mentioned': self.data.get('mentioned', False),
-            'scheduled': self.data.get('scheduled', False),
-            'from_scheduled': self.data.get('from_scheduled', False),
-            'has_protected_content': self.data.get('has_protected_content', False),
-            'outgoing': self.data.get('outgoing', False),
-        }
-
 
 class Client:
     def __init__(self, token):
