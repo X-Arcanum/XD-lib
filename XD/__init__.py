@@ -16,7 +16,8 @@ class TelegramMessage:
         self.entities = message_data.get('entities', [])
         self.command = message_data.get('command', [])
         self.bot = bot
-
+        self.message = self.pretty_print()
+        
     class Chat:
         def __init__(self, chat_data):
             self.id = chat_data.get('id')
