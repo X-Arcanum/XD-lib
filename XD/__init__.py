@@ -4,54 +4,60 @@ import logging
 import json
 from functools import wraps
 from .exceptions import UnAuthorizedBotToken, UnKnownError, ChatNotFound, ConversationTimeOut
+from datetime import datetime
 
 class TelegramMessage:
     def __init__(self, message_data, bot):
         self.data = message_data
-        self.message_id = message_data.get('message_id')
-        self.date = message_data.get('date')
+        self.message_id = message_data.get('message_id', 0)
+        self.date = self.format_date(message_data.get('date', 0))
         self.chat = self.Chat(message_data.get('chat', {}))
-        self.from_user = self.FromUser(message_data.get('from', {}))  # Key corrected from user to from
-        self.text = message_data.get('text')
+        self.from_user = self.FromUser(message_data.get('from_user', {}))
+        self.text = message_data.get('text', '')
         self.entities = message_data.get('entities', [])
         self.command = message_data.get('command', [])
         self.bot = bot
         self.message = self.pretty_print()
 
+    def format_date(self, timestamp):
+        if timestamp:
+            return datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
+        return None
+
     class Chat:
         def __init__(self, chat_data):
-            self.id = chat_data.get('id')
-            self.type = chat_data.get('type')
-            self.title = chat_data.get('title')
-            self.username = chat_data.get('username')
-            self.is_verified = chat_data.get('is_verified')
-            self.is_restricted = chat_data.get('is_restricted')
-            self.is_creator = chat_data.get('is_creator')
-            self.is_scam = chat_data.get('is_scam')
-            self.is_fake = chat_data.get('is_fake')
-            self.has_protected_content = chat_data.get('has_protected_content')
+            self.id = chat_data.get('id', 0)
+            self.type = chat_data.get('type', '')
+            self.title = chat_data.get('title', '')
+            self.username = chat_data.get('username', '')
+            self.is_verified = chat_data.get('is_verified', False)
+            self.is_restricted = chat_data.get('is_restricted', False)
+            self.is_creator = chat_data.get('is_creator', False)
+            self.is_scam = chat_data.get('is_scam', False)
+            self.is_fake = chat_data.get('is_fake', False)
+            self.has_protected_content = chat_data.get('has_protected_content', False)
             self.permissions = self.ChatPermissions(chat_data.get('permissions', {}))
 
         class ChatPermissions:
             def __init__(self, permissions_data):
-                self.can_send_messages = permissions_data.get('can_send_messages')
-                self.can_send_media_messages = permissions_data.get('can_send_media_messages')
-                self.can_send_other_messages = permissions_data.get('can_send_other_messages')
-                self.can_send_polls = permissions_data.get('can_send_polls')
-                self.can_add_web_page_previews = permissions_data.get('can_add_web_page_previews')
-                self.can_change_info = permissions_data.get('can_change_info')
-                self.can_invite_users = permissions_data.get('can_invite_users')
-                self.can_pin_messages = permissions_data.get('can_pin_messages')
+                self.can_send_messages = permissions_data.get('can_send_messages', False)
+                self.can_send_media_messages = permissions_data.get('can_send_media_messages', False)
+                self.can_send_other_messages = permissions_data.get('can_send_other_messages', False)
+                self.can_send_polls = permissions_data.get('can_send_polls', False)
+                self.can_add_web_page_previews = permissions_data.get('can_add_web_page_previews', False)
+                self.can_change_info = permissions_data.get('can_change_info', False)
+                self.can_invite_users = permissions_data.get('can_invite_users', False)
+                self.can_pin_messages = permissions_data.get('can_pin_messages', False)
 
     class FromUser:
         def __init__(self, from_data):
-            self.id = from_data.get('id')
-            self.first_name = from_data.get('first_name')
-            self.last_name = from_data.get('last_name')
-            self.username = from_data.get('username')
+            self.id = from_data.get('id', 0)
+            self.first_name = from_data.get('first_name', '')
+            self.last_name = from_data.get('last_name', '')
+            self.username = from_data.get('username', '')
             self.is_bot = from_data.get('is_bot', False)
             self.is_premium = from_data.get('is_premium', False)
-            self.language_code = from_data.get('language_code')
+            self.language_code = from_data.get('language_code', '')
             self.is_self = from_data.get('is_self', False)
             self.is_contact = from_data.get('is_contact', False)
             self.is_mutual_contact = from_data.get('is_mutual_contact', False)
@@ -61,21 +67,21 @@ class TelegramMessage:
             self.is_scam = from_data.get('is_scam', False)
             self.is_fake = from_data.get('is_fake', False)
             self.is_support = from_data.get('is_support', False)
-            self.status = from_data.get('status')
+            self.status = from_data.get('status', '')
             self.emoji_status = self.EmojiStatus(from_data.get('emoji_status', {}))
-            self.dc_id = from_data.get('dc_id')
+            self.dc_id = from_data.get('dc_id', 0)
             self.photo = self.ChatPhoto(from_data.get('photo', {}))
 
         class EmojiStatus:
             def __init__(self, emoji_status_data):
-                self.custom_emoji_id = emoji_status_data.get('custom_emoji_id')
+                self.custom_emoji_id = emoji_status_data.get('custom_emoji_id', '')
 
         class ChatPhoto:
             def __init__(self, photo_data):
-                self.small_file_id = photo_data.get('small_file_id')
-                self.small_photo_unique_id = photo_data.get('small_photo_unique_id')
-                self.big_file_id = photo_data.get('big_file_id')
-                self.big_photo_unique_id = photo_data.get('big_photo_unique_id')
+                self.small_file_id = photo_data.get('small_file_id', '')
+                self.small_photo_unique_id = photo_data.get('small_photo_unique_id', '')
+                self.big_file_id = photo_data.get('big_file_id', '')
+                self.big_photo_unique_id = photo_data.get('big_photo_unique_id', '')
 
     def pretty_print(self):
         return {
