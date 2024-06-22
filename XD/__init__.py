@@ -115,10 +115,10 @@ class Client:
             if response.status_code == 200:
                 return response.json()
             else:
-                print(f"Failed to send {method} request. Status code: {response.status_code}")
+                self.logger.error(f"Failed to send {method} request. Status code: {response.status_code}, Response: {response.text}")
                 return None
         except Exception as e:
-            print(f"Exception occurred while sending {method} request: {e}")
+            self.logger.error(f"Exception occurred while sending {method} request: {e}")
             return None
 
     async def send_message(self, chat_id, text, parse_mode='MARKDOWN', reply_to_message_id=None):
