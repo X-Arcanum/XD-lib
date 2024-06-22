@@ -7,7 +7,7 @@ from .exceptions import UnAuthorizedBotToken, UnKnownError, ChatNotFound, Conver
 class TelegramMessage:
     def __init__(self, message_data, bot):
         self.data = message_data
-        self.message_id = message_data.get('id', message_data.get('message_id'))
+        self.message_id = message_data.get('message_id')
         self.date = message_data.get('date')
         self.chat = self.Chat(message_data.get('chat'))
         self.from_user = self.FromUser(message_data.get('from_user', {}))
