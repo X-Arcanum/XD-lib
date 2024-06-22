@@ -1,6 +1,7 @@
 import requests
 import asyncio
 import logging
+import json
 from functools import wraps
 from .exceptions import UnAuthorizedBotToken, UnKnownError, ChatNotFound, ConversationTimeOut
 
@@ -195,6 +196,18 @@ class Client:
                 for update in updates:
                     await self._handle_update(update)
                     offset = update['update_id'] + 1
+
+    def extract_reply_json(self, update):
+            if 'message' in update:
+                message = update['message']
+                if 'reply_to_message' in message:
+                    reply = message['reply_to_message']
+                    reply_json = json.dumps(reply, indent=2)
+                    return reply_json
+                else:
+                    return "Not a reply message."
+            else:
+                return "Invalid update format."
 
     async def get_updates(self, offset=None):
         params = {'timeout': 100, 'offset': offset}
