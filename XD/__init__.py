@@ -12,7 +12,7 @@ class TelegramMessage:
         self.message_id = message_data.get('message_id', 0)
         self.date = self.format_date(message_data.get('date', 0))
         self.chat = self.Chat(message_data.get('chat', {}))
-        self.from_user = self.FromUser(message_data.get('from_user', {}))
+        self.from_user = self.FromUser(message_data.get('from', {}))
         self.text = message_data.get('text', '')
         self.entities = message_data.get('entities', [])
         self.command = message_data.get('command', [])
