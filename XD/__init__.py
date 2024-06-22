@@ -4,6 +4,44 @@ import logging
 from functools import wraps
 from .exceptions import UnAuthorizedBotToken, UnKnownError, ChatNotFound, ConversationTimeOut
 
+
+class TelegramMessage:
+    def __init__(self, message_data, bot):
+        self.data = message_data
+        self.chat = self.Chat(message_data['chat'])
+        self.from_user = self.FromUser(message_data['from'])
+        self.bot = bot
+
+    class Chat:
+        def __init__(self, chat_data):
+            self.id = chat_data['id']
+
+    class FromUser:
+        def __init__(self, from_data):
+            self.id = from_data['id']
+            self.first_name = from_data.get('first_name')
+            self.last_name = from_data.get('last_name')
+            self.username = from_data.get('username')
+
+    async def reply_text(self, text, parse_mode='MARKDOWN'):
+        return await self.bot.send_message(self.chat.id, text, parse_mode, self.data['message_id'])
+
+    async def reply_photo(self, photo, caption=None):
+        return await self.bot.send_photo(self.chat.id, photo, caption, self.data['message_id'])
+    
+    async def reply_audio(self, audio):
+        return await self.bot.send_audio(self.chat.id, audio, self.data['message_id'])
+
+    async def reply_document(self, document):
+        return await self.bot.send_document(self.chat.id, document, self.data['message_id'])
+
+    async def reply_video(self, video):
+        return await self.bot.send_video(self.chat.id, video, self.data['message_id'])
+
+    async def reply_voice(self, voice):
+        return await self.bot.send_voice(self.chat.id, voice, self.data['message_id'])            
+
+
 class Client:
     def __init__(self, token):
         if len(token) != 46:
@@ -36,11 +74,11 @@ class Client:
         except Exception as e:
             self.logger.error(f"Exception occurred while validating bot token: {e}")
             return False
+
     async def _send_request(self, method, data):
         try:
             response = requests.post(f"{self.base_url}/{method}", data=data)
             if response.status_code == 200:
-                
                 return response.json()
             else:
                 print(f"Failed to send {method} request. Status code: {response.status_code}")
@@ -49,27 +87,42 @@ class Client:
             print(f"Exception occurred while sending {method} request: {e}")
             return None
 
-    async def send_message(self, chat_id, text, parse_mode='MARKDOWN'):
-        return await self._send_request('sendMessage', {'chat_id': chat_id, 'text': text, 'parse_mode': parse_mode})
+    async def send_message(self, chat_id, text, parse_mode='MARKDOWN', reply_to_message_id=None):
+        data = {'chat_id': chat_id, 'text': text, 'parse_mode': parse_mode}
+        if reply_to_message_id:
+            data['reply_to_message_id'] = reply_to_message_id
+        return await self._send_request('sendMessage', data)
 
-    async def send_audio(self, chat_id, audio):
-        return await self._send_request('sendAudio', {'chat_id': chat_id, 'audio': audio})
+    async def send_audio(self, chat_id, audio, reply_to_message_id=None):
+        data = {'chat_id': chat_id, 'audio': audio}
+        if reply_to_message_id:
+            data['reply_to_message_id'] = reply_to_message_id
+        return await self._send_request('sendAudio', data)
 
-    async def send_photo(self, chat_id, photo, caption):
-        return await self._send_request('sendPhoto', {'chat_id': chat_id, 'photo': photo, 'caption':caption})
+    async def send_photo(self, chat_id, photo, caption=None, reply_to_message_id=None):
+        data = {'chat_id': chat_id, 'photo': photo, 'caption': caption}
+        if reply_to_message_id:
+            data['reply_to_message_id'] = reply_to_message_id
+        return await self._send_request('sendPhoto', data)
 
-    async def send_document(self, chat_id, document):
-        return await self._send_request('sendDocument', {'chat_id': chat_id, 'document': document})
+    async def send_document(self, chat_id, document, reply_to_message_id=None):
+        data = {'chat_id': chat_id, 'document': document}
+        if reply_to_message_id:
+            data['reply_to_message_id'] = reply_to_message_id
+        return await self._send_request('sendDocument', data)
 
-    async def send_video(self, chat_id, video):
-        return await self._send_request('sendVideo', {'chat_id': chat_id, 'video': video})
+    async def send_video(self, chat_id, video, reply_to_message_id=None):
+        data = {'chat_id': chat_id, 'video': video}
+        if reply_to_message_id:
+            data['reply_to_message_id'] = reply_to_message_id
+        return await self._send_request('sendVideo', data)
 
-    async def send_voice(self, chat_id, voice):
-        return await self._send_request('sendVoice', {'chat_id': chat_id, 'voice': voice})
+    async def send_voice(self, chat_id, voice, reply_to_message_id=None):
+        data = {'chat_id': chat_id, 'voice': voice}
+        if reply_to_message_id:
+            data['reply_to_message_id'] = reply_to_message_id
+        return await self._send_request('sendVoice', data)
 
-    async def reply_message(self, chat_id, text, reply_to_message_id):
-        return await self._send_request('sendMessage', {'chat_id': chat_id, 'text': text, 'reply_to_message_id': reply_to_message_id})
-                         
     def on_message(self, command):
         def decorator(func):
             self._message_handlers[command] = func
@@ -81,9 +134,9 @@ class Client:
 
     async def _handle_update(self, update):
         if 'message' in update:
-            message = update['message']
-            if 'text' in message:
-                text = message['text']
+            message = TelegramMessage(update['message'], self)
+            if message.data.get('text'):
+                text = message.data['text']
                 command = text.split()[0]
                 if command in self._message_handlers:
                     await self._message_handlers[command](message)
@@ -115,4 +168,3 @@ class Client:
         except Exception as e:
             self.logger.error(f"Exception occurred while getting updates: {e}")
             return None
-              
