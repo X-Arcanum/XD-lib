@@ -4,17 +4,25 @@ import logging
 from functools import wraps
 from .exceptions import UnAuthorizedBotToken, UnKnownError, ChatNotFound, ConversationTimeOut
 
-
 class TelegramMessage:
     def __init__(self, message_data, bot):
         self.data = message_data
+        self.id = message_data['id']
+        self.date = message_data['date']
         self.chat = self.Chat(message_data['chat'])
-        self.from_user = self.FromUser(message_data['from'])
+        self.from_user = self.FromUser(message_data['from_user'])
+        self.text = message_data.get('text')
+        self.entities = message_data.get('entities', [])
+        self.command = message_data.get('command', [])
         self.bot = bot
 
     class Chat:
         def __init__(self, chat_data):
             self.id = chat_data['id']
+            self.type = chat_data['type']
+            self.title = chat_data.get('title')
+            self.username = chat_data.get('username')
+            self.photo = chat_data.get('photo')
 
     class FromUser:
         def __init__(self, from_data):
@@ -22,25 +30,51 @@ class TelegramMessage:
             self.first_name = from_data.get('first_name')
             self.last_name = from_data.get('last_name')
             self.username = from_data.get('username')
+            self.is_bot = from_data.get('is_bot', False)
+            self.is_premium = from_data.get('is_premium', False)
+            self.language_code = from_data.get('language_code')
 
     async def reply_text(self, text, parse_mode='MARKDOWN'):
-        return await self.bot.send_message(self.chat.id, text, parse_mode, self.data['message_id'])
+        return await self.bot.send_message(self.chat.id, text, parse_mode, self.id)
 
     async def reply_photo(self, photo, caption=None):
-        return await self.bot.send_photo(self.chat.id, photo, caption, self.data['message_id'])
+        return await self.bot.send_photo(self.chat.id, photo, caption, self.id)
     
     async def reply_audio(self, audio):
-        return await self.bot.send_audio(self.chat.id, audio, self.data['message_id'])
+        return await self.bot.send_audio(self.chat.id, audio, self.id)
 
     async def reply_document(self, document):
-        return await self.bot.send_document(self.chat.id, document, self.data['message_id'])
+        return await self.bot.send_document(self.chat.id, document, self.id)
 
     async def reply_video(self, video):
-        return await self.bot.send_video(self.chat.id, video, self.data['message_id'])
+        return await self.bot.send_video(self.chat.id, video, self.id)
 
     async def reply_voice(self, voice):
-        return await self.bot.send_voice(self.chat.id, voice, self.data['message_id'])            
+        return await self.bot.send_voice(self.chat.id, voice, self.id) 
 
+    def pretty_print(self):
+        return {
+            'message_id': self.id,
+            'date': self.date,
+            'chat': {
+                'id': self.chat.id,
+                'type': self.chat.type,
+                'title': self.chat.title,
+                'username': self.chat.username,
+            },
+            'from_user': {
+                'id': self.from_user.id,
+                'first_name': self.from_user.first_name,
+                'last_name': self.from_user.last_name,
+                'username': self.from_user.username,
+                'is_bot': self.from_user.is_bot,
+                'is_premium': self.from_user.is_premium,
+                'language_code': self.from_user.language_code,
+            },
+            'text': self.text,
+            'entities': self.entities,
+            'command': self.command
+        }
 
 class Client:
     def __init__(self, token):
@@ -75,9 +109,9 @@ class Client:
             self.logger.error(f"Exception occurred while validating bot token: {e}")
             return False
 
-    async def _send_request(self, method, data):
+    async def _send_request(self, method, data, files=None):
         try:
-            response = requests.post(f"{self.base_url}/{method}", data=data)
+            response = requests.post(f"{self.base_url}/{method}", data=data, files=files)
             if response.status_code == 200:
                 return response.json()
             else:
@@ -94,34 +128,41 @@ class Client:
         return await self._send_request('sendMessage', data)
 
     async def send_audio(self, chat_id, audio, reply_to_message_id=None):
-        data = {'chat_id': chat_id, 'audio': audio}
+        data = {'chat_id': chat_id}
+        files = {'audio': audio}
         if reply_to_message_id:
             data['reply_to_message_id'] = reply_to_message_id
-        return await self._send_request('sendAudio', data)
+        return await self._send_request('sendAudio', data, files)
 
     async def send_photo(self, chat_id, photo, caption=None, reply_to_message_id=None):
-        data = {'chat_id': chat_id, 'photo': photo, 'caption': caption}
+        data = {'chat_id': chat_id}
+        if caption:
+            data['caption'] = caption
+        files = {'photo': photo}
         if reply_to_message_id:
             data['reply_to_message_id'] = reply_to_message_id
-        return await self._send_request('sendPhoto', data)
+        return await self._send_request('sendPhoto', data, files)
 
     async def send_document(self, chat_id, document, reply_to_message_id=None):
-        data = {'chat_id': chat_id, 'document': document}
+        data = {'chat_id': chat_id}
+        files = {'document': document}
         if reply_to_message_id:
             data['reply_to_message_id'] = reply_to_message_id
-        return await self._send_request('sendDocument', data)
+        return await self._send_request('sendDocument', data, files)
 
     async def send_video(self, chat_id, video, reply_to_message_id=None):
-        data = {'chat_id': chat_id, 'video': video}
+        data = {'chat_id': chat_id}
+        files = {'video': video}
         if reply_to_message_id:
             data['reply_to_message_id'] = reply_to_message_id
-        return await self._send_request('sendVideo', data)
+        return await self._send_request('sendVideo', data, files)
 
     async def send_voice(self, chat_id, voice, reply_to_message_id=None):
-        data = {'chat_id': chat_id, 'voice': voice}
+        data = {'chat_id': chat_id}
+        files = {'voice': voice}
         if reply_to_message_id:
             data['reply_to_message_id'] = reply_to_message_id
-        return await self._send_request('sendVoice', data)
+        return await self._send_request('sendVoice', data, files)
 
     def on_message(self, command):
         def decorator(func):
@@ -135,9 +176,8 @@ class Client:
     async def _handle_update(self, update):
         if 'message' in update:
             message = TelegramMessage(update['message'], self)
-            if message.data.get('text'):
-                text = message.data['text']
-                command = text.split()[0]
+            if message.text:
+                command = message.text.split()[0]
                 if command in self._message_handlers:
                     await self._message_handlers[command](message)
 
@@ -168,3 +208,4 @@ class Client:
         except Exception as e:
             self.logger.error(f"Exception occurred while getting updates: {e}")
             return None
+                                         
