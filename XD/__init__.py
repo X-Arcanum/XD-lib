@@ -76,6 +76,7 @@ class TelegramMessage:
             'command': self.command
         }
 
+
 class Client:
     def __init__(self, token):
         if len(token) != 46:
