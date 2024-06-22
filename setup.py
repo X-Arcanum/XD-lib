@@ -11,7 +11,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'XD-lib=Xd-lib.bot:main',
+            'XD-lib=Xd-lib:main',
         ],
     },
     url='https://github.com/X-Arcanum/XD-lib',
