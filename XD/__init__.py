@@ -168,8 +168,8 @@ class Client:
         def decorator(func):
             self._message_handlers[command] = func
             @wraps(func)
-            async def wrapper(update):
-                await func(update)
+            async def wrapper(message):
+                await func(message)
             return wrapper
         return decorator
 
@@ -181,7 +181,6 @@ class Client:
                 if command in self._message_handlers:
                     await self._message_handlers[command](message)
 
-                    
     async def start(self):
         if not self.validate_token():
             self.logger.error("Bot token is invalid. Exiting...")
@@ -209,4 +208,4 @@ class Client:
         except Exception as e:
             self.logger.error(f"Exception occurred while getting updates: {e}")
             return None
-        
+
