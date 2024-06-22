@@ -9,7 +9,7 @@ class TelegramMessage:
         self.data = message_data
         self.message_id = message_data.get('message_id')
         self.date = message_data.get('date')
-        self.chat = self.Chat(message_data.get('chat'))
+        self.chat = self.Chat(message_data.get('chat', {}))
         self.from_user = self.FromUser(message_data.get('from_user', {}))
         self.text = message_data.get('text')
         self.entities = message_data.get('entities', [])
@@ -18,7 +18,7 @@ class TelegramMessage:
 
     class Chat:
         def __init__(self, chat_data):
-            self.id = chat_data['id']
+            self.id = chat_data.get('id')
             self.type = chat_data.get('type')
             self.title = chat_data.get('title')
             self.username = chat_data.get('username')
@@ -26,7 +26,7 @@ class TelegramMessage:
 
     class FromUser:
         def __init__(self, from_data):
-            self.id = from_data['id']
+            self.id = from_data.get('id')
             self.first_name = from_data.get('first_name')
             self.last_name = from_data.get('last_name')
             self.username = from_data.get('username')
@@ -176,11 +176,11 @@ class Client:
     async def _handle_update(self, update):
         if 'message' in update:
             message = TelegramMessage(update['message'], self)
-            if message.data.get('text'):
-                text = message.data['text']
-                command = text.split()[0]
+            if message.text:
+                command = message.text.split()[0]
                 if command in self._message_handlers:
                     await self._message_handlers[command](message)
+
                     
     async def start(self):
         if not self.validate_token():
