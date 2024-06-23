@@ -49,4 +49,6 @@ class QueryError(Exception):
     def __init__(self):
         msg = 'Query is too old and response timeouted or Query ID is invalid.'
         super().__init__(msg)
+
+
       
