@@ -4,37 +4,169 @@ import logging
 import json
 from functools import wraps
 from .exceptions import UnAuthorizedBotToken, UnKnownError, ChatNotFound, ConversationTimeOut
+from datetime import datetime
 
 class TelegramMessage:
     def __init__(self, message_data, bot):
         self.data = message_data
-        self.message_id = message_data.get('message_id')
-        self.date = message_data.get('date')
+        self.message_id = message_data.get('message_id', 0)
+        self.date = self.format_date(message_data.get('date', 0))
         self.chat = self.Chat(message_data.get('chat', {}))
-        self.from_user = self.FromUser(message_data.get('from', {})) #key corrected from user to from
-        self.text = message_data.get('text')
+        self.from_user = self.FromUser(message_data.get('from', {}))
+        self.text = message_data.get('text', '')
         self.entities = message_data.get('entities', [])
         self.command = message_data.get('command', [])
         self.bot = bot
+        self.message = self.pretty_print()
+
+    def format_date(self, timestamp):
+        if timestamp:
+            return datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
+        return None
 
     class Chat:
         def __init__(self, chat_data):
-            self.id = chat_data.get('id')
-            self.type = chat_data.get('type')
-            self.title = chat_data.get('title')
-            self.username = chat_data.get('username')
-            self.photo = chat_data.get('photo')
+            self.id = chat_data.get('id', 0)
+            self.type = chat_data.get('type', '')
+            self.title = chat_data.get('title', '')
+            self.username = chat_data.get('username', '')
+            self.is_verified = chat_data.get('is_verified', False)
+            self.is_restricted = chat_data.get('is_restricted', False)
+            self.is_creator = chat_data.get('is_creator', False)
+            self.is_scam = chat_data.get('is_scam', False)
+            self.is_fake = chat_data.get('is_fake', False)
+            self.has_protected_content = chat_data.get('has_protected_content', False)
+            self.permissions = self.ChatPermissions(chat_data.get('permissions', {}))
+
+        class ChatPermissions:
+            def __init__(self, permissions_data):
+                self.can_send_messages = permissions_data.get('can_send_messages', False)
+                self.can_send_media_messages = permissions_data.get('can_send_media_messages', False)
+                self.can_send_other_messages = permissions_data.get('can_send_other_messages', False)
+                self.can_send_polls = permissions_data.get('can_send_polls', False)
+                self.can_add_web_page_previews = permissions_data.get('can_add_web_page_previews', False)
+                self.can_change_info = permissions_data.get('can_change_info', False)
+                self.can_invite_users = permissions_data.get('can_invite_users', False)
+                self.can_pin_messages = permissions_data.get('can_pin_messages', False)
 
     class FromUser:
         def __init__(self, from_data):
-            self.id = from_data.get('id')
-            self.first_name = from_data.get('first_name')
-            self.last_name = from_data.get('last_name')
-            self.username = from_data.get('username')
+            self.id = from_data.get('id', 0)
+            self.first_name = from_data.get('first_name', '')
+            self.last_name = from_data.get('last_name', '')
+            self.username = from_data.get('username', '')
             self.is_bot = from_data.get('is_bot', False)
             self.is_premium = from_data.get('is_premium', False)
-            self.language_code = from_data.get('language_code')
+            self.language_code = from_data.get('language_code', '')
+            self.is_self = from_data.get('is_self', False)
+            self.is_contact = from_data.get('is_contact', False)
+            self.is_mutual_contact = from_data.get('is_mutual_contact', False)
+            self.is_deleted = from_data.get('is_deleted', False)
+            self.is_verified = from_data.get('is_verified', False)
+            self.is_restricted = from_data.get('is_restricted', False)
+            self.is_scam = from_data.get('is_scam', False)
+            self.is_fake = from_data.get('is_fake', False)
+            self.is_support = from_data.get('is_support', False)
+            self.status = from_data.get('status', '')
+            self.emoji_status = self.EmojiStatus(from_data.get('emoji_status', {}))
+            self.dc_id = from_data.get('dc_id', 0)
+            self.photo = self.ChatPhoto(from_data.get('photo', {}))
 
+        class EmojiStatus:
+            def __init__(self, emoji_status_data):
+                self.custom_emoji_id = emoji_status_data.get('custom_emoji_id', '')
+
+        class ChatPhoto:
+            def __init__(self, photo_data):
+                self.small_file_id = photo_data.get('small_file_id', '')
+                self.small_photo_unique_id = photo_data.get('small_photo_unique_id', '')
+                self.big_file_id = photo_data.get('big_file_id', '')
+                self.big_photo_unique_id = photo_data.get('big_photo_unique_id', '')
+
+    def pretty_print(self):
+        return {
+            'message_id': self.message_id,
+            'date': self.date,
+            'chat': {
+                'id': self.chat.id,
+                'type': self.chat.type,
+                'title': self.chat.title,
+                'username': self.chat.username,
+                'is_verified': self.chat.is_verified,
+                'is_restricted': self.chat.is_restricted,
+                'is_creator': self.chat.is_creator,
+                'is_scam': self.chat.is_scam,
+                'is_fake': self.chat.is_fake,
+                'has_protected_content': self.chat.has_protected_content,
+                'permissions': {
+                    'can_send_messages': self.chat.permissions.can_send_messages,
+                    'can_send_media_messages': self.chat.permissions.can_send_media_messages,
+                    'can_send_other_messages': self.chat.permissions.can_send_other_messages,
+                    'can_send_polls': self.chat.permissions.can_send_polls,
+                    'can_add_web_page_previews': self.chat.permissions.can_add_web_page_previews,
+                    'can_change_info': self.chat.permissions.can_change_info,
+                    'can_invite_users': self.chat.permissions.can_invite_users,
+                    'can_pin_messages': self.chat.permissions.can_pin_messages,
+                },
+            },
+            'from_user': {
+                'id': self.from_user.id,
+                'first_name': self.from_user.first_name,
+                'last_name': self.from_user.last_name,
+                'username': self.from_user.username,
+                'is_bot': self.from_user.is_bot,
+                'is_premium': self.from_user.is_premium,
+                'language_code': self.from_user.language_code,
+                'is_self': self.from_user.is_self,
+                'is_contact': self.from_user.is_contact,
+                'is_mutual_contact': self.from_user.is_mutual_contact,
+                'is_deleted': self.from_user.is_deleted,
+                'is_verified': self.from_user.is_verified,
+                'is_restricted': self.from_user.is_restricted,
+                'is_scam': self.from_user.is_scam,
+                'is_fake': self.from_user.is_fake,
+                'is_support': self.from_user.is_support,
+                'status': self.from_user.status,
+                'emoji_status': {
+                    'custom_emoji_id': self.from_user.emoji_status.custom_emoji_id,
+                },
+                'dc_id': self.from_user.dc_id,
+                'photo': {
+                    'small_file_id': self.from_user.photo.small_file_id,
+                    'small_photo_unique_id': self.from_user.photo.small_photo_unique_id,
+                    'big_file_id': self.from_user.photo.big_file_id,
+                    'big_photo_unique_id': self.from_user.photo.big_photo_unique_id,
+                },
+            },
+            'text': self.text,
+            'entities': self.entities,
+            'command': self.command,
+            'mentioned': self.data.get('mentioned', False),
+            'scheduled': self.data.get('scheduled', False),
+            'from_scheduled': self.data.get('from_scheduled', False),
+            'has_protected_content': self.data.get('has_protected_content', False),
+            'outgoing': self.data.get('outgoing', False),
+        }
+
+    async def edit_text(self, new_text):
+        """
+        Edit the message text asynchronously.
+        """
+        await self.bot.edit_message_text(
+            chat_id=self.chat.id,
+            message_id=self.message_id,
+            text=new_text
+        )
+
+    async def delete(self):
+        """
+        Delete the message asynchronously.
+        """
+        await self.bot.delete_message(
+            chat_id=self.chat.id,
+            message_id=self.message_id
+        )
+        
     async def reply_text(self, text, parse_mode='MARKDOWN'):
         """
         Send a text message as a reply to the current message.
@@ -142,46 +274,6 @@ class TelegramMessage:
         The `chat.id` and `message_id` of the current message are used as parameters for the `send_voice` method.
         """
         return await self.bot.send_voice(self.chat.id, voice, self.message_id) 
-
-    def pretty_print(self):
-        """
-        Generate a pretty-printed representation of the TelegramMessage object.
-
-        Returns:
-        dict: A dictionary containing the message details in a human-readable format.
-
-        Attributes:
-        message_id (int): The unique identifier for the message.
-        date (int): The timestamp of when the message was sent.
-        chat (dict): A dictionary containing information about the chat.
-        from_user (dict): A dictionary containing information about the sender.
-        text (str): The text content of the message.
-        entities (list): A list of entities in the message.
-        command (list): A list of commands extracted from the message text.
-        """
-        return {
-            'message_id': self.message_id,
-            'date': self.date,
-            'chat': {
-                'id': self.chat.id,
-                'type': self.chat.type,
-                'title': self.chat.title,
-                'username': self.chat.username,
-            },
-            'from_user': {
-                'id': self.from_user.id,
-                'first_name': self.from_user.first_name,
-                'last_name': self.from_user.last_name,
-                'username': self.from_user.username,
-                'is_bot': self.from_user.is_bot,
-                'is_premium': self.from_user.is_premium,
-                'language_code': self.from_user.language_code,
-            },
-            'text': self.text,
-            'entities': self.entities,
-            'command': self.command
-        }
-
 
 class Client:
     def __init__(self, token):
