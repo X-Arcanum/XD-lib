@@ -32,7 +32,6 @@ class TelegramBot:
 
         response = requests.get(url, params=kwargs)
         if response.status_code != 200:
-            # Handle error or raise an exception
             return None
         else:
             return response.json().get('result')
